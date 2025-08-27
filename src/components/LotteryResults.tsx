@@ -1,5 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface LotteryResult {
   residentName: string;
@@ -21,9 +24,37 @@ export function LotteryResults({ results, isVisible }: LotteryResultsProps) {
   const coveredResults = results.filter(r => r.spotType === 'covered');
   const uncoveredResults = results.filter(r => r.spotType === 'uncovered');
 
+  const downloadResults = () => {
+    const workbook = XLSX.utils.book_new();
+    
+    // Criar dados para a planilha
+    const data = results.map(result => ({
+      'Morador': result.residentName,
+      'Apartamento': result.apartment,
+      'Número da Vaga': result.spotNumber,
+      'Tipo de Vaga': result.spotType === 'covered' ? 'Coberta' : 'Descoberta',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Resultado do Sorteio");
+    
+    const fileName = `resultado-sorteio-${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <div className="space-y-6 mt-8">
-      <h2 className="text-2xl font-bold text-foreground">Resultado do Sorteio</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-foreground">Resultado do Sorteio</h2>
+        <Button 
+          onClick={downloadResults}
+          variant="outline"
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Baixar Resultado
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Vagas Cobertas */}
