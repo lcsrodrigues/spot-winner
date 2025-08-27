@@ -5,10 +5,10 @@ import { ResidentCard } from "@/components/ResidentCard";
 import { StatsCards } from "@/components/StatsCards";
 import { LotteryResults } from "@/components/LotteryResults";
 import { ExcelUpload } from "@/components/ExcelUpload";
-import { mockResidents, mockParkingSpots } from "@/data/mockData";
+import { ParkingConfig } from "@/components/ParkingConfig";
 import { toast } from "sonner";
 import { Shuffle, Users, ParkingCircle } from "lucide-react";
-import { Resident } from "@/types/lottery";
+import { Resident, ParkingSpot } from "@/types/lottery";
 
 interface LotteryResult {
   residentName: string;
@@ -18,13 +18,18 @@ interface LotteryResult {
 }
 
 const Index = () => {
-  const [residents, setResidents] = useState(mockResidents);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [parkingSpots, setParkingSpots] = useState<ParkingSpot[]>([]);
   const [lotteryResults, setLotteryResults] = useState<LotteryResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
 
   const handleResidentsAdded = (newResidents: Resident[]) => {
-    setResidents(prev => [...prev, ...newResidents]);
+    setResidents(newResidents);
+  };
+
+  const handleSpotsConfigured = (spots: ParkingSpot[]) => {
+    setParkingSpots(spots);
   };
 
   const getEligibleResidents = (type: 'covered' | 'uncovered') => {
@@ -50,7 +55,7 @@ const Index = () => {
       
       // Sortear vagas cobertas
       const eligibleForCovered = getEligibleResidents('covered');
-      const coveredSpots = mockParkingSpots.filter(s => s.type === 'covered');
+      const coveredSpots = parkingSpots.filter(s => s.type === 'covered');
       const shuffledCoveredResidents = [...eligibleForCovered].sort(() => Math.random() - 0.5);
       
       for (let i = 0; i < Math.min(coveredSpots.length, shuffledCoveredResidents.length); i++) {
@@ -66,7 +71,7 @@ const Index = () => {
       const eligibleForUncovered = getEligibleResidents('uncovered').filter(
         r => !results.some(result => result.residentName === r.name)
       );
-      const uncoveredSpots = mockParkingSpots.filter(s => s.type === 'uncovered');
+      const uncoveredSpots = parkingSpots.filter(s => s.type === 'uncovered');
       const shuffledUncoveredResidents = [...eligibleForUncovered].sort(() => Math.random() - 0.5);
       
       for (let i = 0; i < Math.min(uncoveredSpots.length, shuffledUncoveredResidents.length); i++) {
@@ -110,6 +115,9 @@ const Index = () => {
         {/* Stats Cards */}
         <StatsCards residents={residents} />
 
+        {/* Parking Configuration */}
+        <ParkingConfig onSpotsConfigured={handleSpotsConfigured} currentSpots={parkingSpots} />
+
         {/* Excel Upload */}
         <ExcelUpload onResidentsAdded={handleResidentsAdded} />
 
@@ -132,14 +140,14 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Elegíveis para vagas descobertas</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-primary">{mockParkingSpots.length}</p>
+                <p className="text-2xl font-bold text-primary">{parkingSpots.length}</p>
                 <p className="text-sm text-muted-foreground">Total de vagas disponíveis</p>
               </div>
             </div>
             
             <Button 
               onClick={performLottery}
-              disabled={isDrawing}
+              disabled={isDrawing || parkingSpots.length === 0 || residents.length === 0}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
             >
               {isDrawing ? (
