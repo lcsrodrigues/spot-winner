@@ -16,6 +16,7 @@ interface LotteryResult {
 }
 
 const Index = () => {
+  console.log('Sistema de Sorteio carregado!', { mockResidents });
   const [residents] = useState(mockResidents);
   const [lotteryResults, setLotteryResults] = useState<LotteryResult[]>([]);
   const [showResults, setShowResults] = useState(false);
