@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResidentCard } from "@/components/ResidentCard";
 import { StatsCards } from "@/components/StatsCards";
 import { LotteryResults } from "@/components/LotteryResults";
+import { ExcelUpload } from "@/components/ExcelUpload";
 import { mockResidents, mockParkingSpots } from "@/data/mockData";
 import { toast } from "sonner";
 import { Shuffle, Users, ParkingCircle } from "lucide-react";
+import { Resident } from "@/types/lottery";
 
 interface LotteryResult {
   residentName: string;
@@ -16,11 +18,14 @@ interface LotteryResult {
 }
 
 const Index = () => {
-  console.log('Sistema de Sorteio carregado!', { mockResidents });
-  const [residents] = useState(mockResidents);
+  const [residents, setResidents] = useState(mockResidents);
   const [lotteryResults, setLotteryResults] = useState<LotteryResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  const handleResidentsAdded = (newResidents: Resident[]) => {
+    setResidents(prev => [...prev, ...newResidents]);
+  };
 
   const getEligibleResidents = (type: 'covered' | 'uncovered') => {
     if (type === 'covered') {
@@ -104,6 +109,9 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
         <StatsCards residents={residents} />
+
+        {/* Excel Upload */}
+        <ExcelUpload onResidentsAdded={handleResidentsAdded} />
 
         {/* Lottery Action */}
         <Card className="mb-8 bg-gradient-to-r from-primary/5 to-primary-glow/10 border-primary/20">
