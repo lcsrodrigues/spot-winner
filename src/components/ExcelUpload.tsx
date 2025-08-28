@@ -24,21 +24,24 @@ export function ExcelUpload({ onResidentsAdded }: ExcelUploadProps) {
         'Apartamento': '101',
         'Status de Pagamento': 'current',
         'Meses em Atraso': 0,
-        'Possui Justificativa': 'não'
+        'Possui Justificativa': 'não',
+        'Vaga Dupla': 'não'
       },
       {
         'Nome': 'Maria Santos',
         'Apartamento': '102',
         'Status de Pagamento': 'overdue',
         'Meses em Atraso': 2,
-        'Possui Justificativa': 'não'
+        'Possui Justificativa': 'sim',
+        'Vaga Dupla': 'não'
       },
       {
         'Nome': 'Carlos Oliveira',
         'Apartamento': '201',
-        'Status de Pagamento': 'delinquent',
-        'Meses em Atraso': 5,
-        'Possui Justificativa': 'sim'
+        'Status de Pagamento': 'current',
+        'Meses em Atraso': 0,
+        'Possui Justificativa': 'não',
+        'Vaga Dupla': 'sim'
       }
     ];
 
@@ -56,6 +59,10 @@ export function ExcelUpload({ onResidentsAdded }: ExcelUploadProps) {
       { 'Instruções de Preenchimento': 'Possui Justificativa deve ser:' },
       { 'Instruções de Preenchimento': 'sim - Para moradores com justificativa' },
       { 'Instruções de Preenchimento': 'não - Para moradores sem justificativa' },
+      { 'Instruções de Preenchimento': '' },
+      { 'Instruções de Preenchimento': 'Vaga Dupla deve ser:' },
+      { 'Instruções de Preenchimento': 'sim - Para apartamentos com direito a vaga dupla' },
+      { 'Instruções de Preenchimento': 'não - Para apartamentos com vaga simples' },
       { 'Instruções de Preenchimento': '' },
       { 'Instruções de Preenchimento': 'Meses em Atraso: número inteiro (0 ou maior)' }
     ];
@@ -102,6 +109,7 @@ export function ExcelUpload({ onResidentsAdded }: ExcelUploadProps) {
             const paymentStatusRaw = String(row['Status de Pagamento'] || '').toLowerCase().trim();
             const monthsOverdue = Number(row['Meses em Atraso']) || 0;
             const hasJustificationRaw = String(row['Possui Justificativa'] || '').toLowerCase().trim();
+            const hasDoubleSpotRaw = String(row['Vaga Dupla'] || '').toLowerCase().trim();
             
             // Validações
             if (!name) {
@@ -130,6 +138,9 @@ export function ExcelUpload({ onResidentsAdded }: ExcelUploadProps) {
             // Validar justificativa
             const hasJustification = hasJustificationRaw === 'sim' || hasJustificationRaw === 'true';
             
+            // Validar vaga dupla
+            const hasDoubleSpot = hasDoubleSpotRaw === 'sim' || hasDoubleSpotRaw === 'true';
+            
             // Validar meses em atraso
             if (isNaN(monthsOverdue) || monthsOverdue < 0) {
               errors.push(`Linha ${index + 2}: Meses em atraso deve ser um número válido`);
@@ -142,7 +153,8 @@ export function ExcelUpload({ onResidentsAdded }: ExcelUploadProps) {
               apartment,
               paymentStatus,
               monthsOverdue,
-              hasJustification
+              hasJustification,
+              hasDoubleSpot
             });
             
           } catch (err) {

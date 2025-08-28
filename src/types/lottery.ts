@@ -9,6 +9,7 @@ export interface Resident {
   paymentStatus: PaymentStatus;
   monthsOverdue: number;
   hasJustification: boolean;
+  hasDoubleSpot?: boolean;
 }
 
 export interface ParkingSpot {

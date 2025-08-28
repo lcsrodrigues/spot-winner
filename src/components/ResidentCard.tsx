@@ -54,7 +54,14 @@ export function ResidentCard({ resident }: ResidentCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{resident.name}</CardTitle>
-          {getStatusBadge(resident)}
+          <div className="flex items-center gap-2">
+            {getStatusBadge(resident)}
+            {resident.hasDoubleSpot && (
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                Vaga Dupla
+              </Badge>
+            )}
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">Apartamento {resident.apartment}</p>
       </CardHeader>
