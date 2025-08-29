@@ -1,6 +1,7 @@
 export type PaymentStatus = 'current' | 'overdue' | 'delinquent';
 
 export type SpotType = 'covered' | 'uncovered';
+export type ParkingSection = 'g1' | 'g2' | 'terreo';
 
 export interface Resident {
   id: string;
@@ -16,6 +17,7 @@ export interface ParkingSpot {
   id: string;
   number: string;
   type: SpotType;
+  section?: ParkingSection;
   assignedTo?: string;
 }
 

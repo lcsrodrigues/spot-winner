@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParkingConfig } from "./ParkingConfig";
 import { ExcelUpload } from "./ExcelUpload";
+import { SpotsExcelUpload } from "./SpotsExcelUpload";
 import { StatsCards } from "./StatsCards";
 import { ResidentCard } from "./ResidentCard";
 import { Button } from "@/components/ui/button";
@@ -151,12 +152,13 @@ export function AdminPanel({
             </div>
           </TabsContent>
 
-          <TabsContent value="parking">
-            <ParkingConfig 
-              onSpotsConfigured={onSpotsConfigured}
-              currentSpots={parkingSpots}
-            />
-          </TabsContent>
+<TabsContent value="parking">
+  <SpotsExcelUpload onSpotsConfigured={onSpotsConfigured} />
+  <ParkingConfig 
+    onSpotsConfigured={onSpotsConfigured}
+    currentSpots={parkingSpots}
+  />
+</TabsContent>
 
           <TabsContent value="double-spots">
             <Card>
