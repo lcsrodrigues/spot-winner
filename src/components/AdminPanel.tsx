@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ParkingConfig } from "./ParkingConfig";
 import { ExcelUpload } from "./ExcelUpload";
-import { SpotsExcelUpload } from "./SpotsExcelUpload";
+import { VagasExcelUpload } from "./VagasExcelUpload";
 import { StatsCards } from "./StatsCards";
 import { ResidentCard } from "./ResidentCard";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ interface AdminPanelProps {
   residents: Resident[];
   parkingSpots: ParkingSpot[];
   onResidentsAdded: (residents: Resident[]) => void;
-  onSpotsConfigured: (spots: ParkingSpot[]) => void;
+  onVagasConfigured: (vagas: ParkingSpot[]) => void;
   onPerformLottery: () => void;
 }
 
@@ -26,7 +25,7 @@ export function AdminPanel({
   residents, 
   parkingSpots, 
   onResidentsAdded, 
-  onSpotsConfigured,
+  onVagasConfigured,
   onPerformLottery 
 }: AdminPanelProps) {
   const [doubleSpotApartments, setDoubleSpotApartments] = useState<string>("");
@@ -153,11 +152,44 @@ export function AdminPanel({
           </TabsContent>
 
 <TabsContent value="parking">
-  <SpotsExcelUpload onSpotsConfigured={onSpotsConfigured} />
-  <ParkingConfig 
-    onSpotsConfigured={onSpotsConfigured}
-    currentSpots={parkingSpots}
-  />
+  <VagasExcelUpload onVagasConfigured={onVagasConfigured} />
+  
+  <Card>
+    <CardHeader>
+      <CardTitle>Vagas Configuradas ({parkingSpots.length})</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {parkingSpots.map((vaga) => (
+          <div key={vaga.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+            <div className="flex gap-4">
+              <span className="font-medium">#{vaga.number}</span>
+              <span className="text-muted-foreground">{vaga.location}</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                vaga.type === 'ÚNICA' ? 'bg-primary/10 text-primary' :
+                vaga.type === 'DUPLA' ? 'bg-warning/10 text-warning' :
+                'bg-accent/10 text-accent'
+              }`}>
+                {vaga.type}
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {vaga.isPreSelected && <span className="text-warning">Pré-selecionada</span>}
+              {vaga.hasHiddenRule && <span className="text-danger">Não sorteia</span>}
+              {!vaga.isPreSelected && !vaga.hasHiddenRule && 
+                <span className="text-success">Disponível ({vaga.eligibleApartments.length} aptos)</span>
+              }
+            </div>
+          </div>
+        ))}
+      </div>
+      {parkingSpots.length === 0 && (
+        <p className="text-center text-muted-foreground py-8">
+          Nenhuma vaga configurada. Faça o upload do arquivo de configuração.
+        </p>
+      )}
+    </CardContent>
+  </Card>
 </TabsContent>
 
           <TabsContent value="double-spots">

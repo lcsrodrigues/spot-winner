@@ -5,14 +5,7 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { PublicLottery } from "@/components/PublicLottery";
 import { Settings, Users } from "lucide-react";
 import { toast } from "sonner";
-import { Resident, ParkingSpot } from "@/types/lottery";
-
-interface LotteryResult {
-  residentName: string;
-  apartment: string;
-  spotNumber: string;
-  spotType: 'covered' | 'uncovered';
-}
+import { Resident, ParkingSpot, LotteryResult } from "@/types/lottery";
 
 const Index = () => {
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -24,96 +17,70 @@ const Index = () => {
     setResidents(newResidents);
   };
 
-  const handleSpotsConfigured = (spots: ParkingSpot[]) => {
-    setParkingSpots(spots);
-  };
-
-  const getEligibleResidents = (type: 'covered' | 'uncovered') => {
-    const baseEligible = residents.filter(r => {
-      const isPaid = r.paymentStatus === 'current';
-      const hasJustification = r.paymentStatus === 'overdue' && r.hasJustification;
-      const isEligible = isPaid || hasJustification;
-      
-      if (type === 'covered') {
-        return isEligible && (isPaid || (hasJustification && r.monthsOverdue <= 2));
-      }
-      return isEligible;
-    });
-
-    // Expandir lista para incluir moradores com vaga dupla
-    const expandedList: Resident[] = [];
-    baseEligible.forEach(resident => {
-      expandedList.push(resident);
-      if (resident.hasDoubleSpot) {
-        expandedList.push({ ...resident, id: `${resident.id}_double` });
-      }
-    });
-
-    return expandedList;
+  const handleVagasConfigured = (vagas: ParkingSpot[]) => {
+    setParkingSpots(vagas);
   };
 
   const performLottery = () => {
-    const coveredSpots = parkingSpots.filter(s => s.type === 'covered');
-    const uncoveredSpots = parkingSpots.filter(s => s.type === 'uncovered');
+    // Filtrar apenas vagas válidas para sorteio
+    const vagasDisponiveis = parkingSpots.filter(vaga => 
+      !vaga.isPreSelected && !vaga.hasHiddenRule
+    );
     
-    const eligibleForCovered = getEligibleResidents('covered');
-    const eligibleForUncovered = getEligibleResidents('uncovered');
+    const results: LotteryResult['results'] = [];
     
-    const newResults: Array<{
-      residentName: string;
-      apartment: string;
-      spotNumber: string;
-      spotType: 'covered' | 'uncovered';
-    }> = [];
-    
-    // Sortear vagas cobertas
-    const shuffledCoveredResidents = [...eligibleForCovered].sort(() => Math.random() - 0.5);
-    const availableCoveredSpots = [...coveredSpots];
-    
-    for (let i = 0; i < Math.min(shuffledCoveredResidents.length, availableCoveredSpots.length); i++) {
-      const resident = shuffledCoveredResidents[i];
-      const spot = availableCoveredSpots[i];
+    // Processar cada vaga disponível
+    vagasDisponiveis.forEach(vaga => {
+      // Encontrar apartamentos elegíveis que ainda têm moradores cadastrados
+      const apartamentosElegiveis = vaga.eligibleApartments.filter(apt =>
+        residents.some(resident => resident.apartment === apt)
+      );
       
-      // Se for uma entrada de vaga dupla, mostrar como tal
-      const displayName = resident.id.includes('_double') 
-        ? `${resident.name} (2ª vaga)`
-        : resident.name;
-      
-      newResults.push({
-        residentName: displayName,
-        apartment: resident.apartment,
-        spotNumber: spot.number,
-        spotType: 'covered'
-      });
-    }
-    
-    // Sortear vagas descobertas
-    const shuffledUncoveredResidents = [...eligibleForUncovered].sort(() => Math.random() - 0.5);
-    const availableUncoveredSpots = [...uncoveredSpots];
-    
-    for (let i = 0; i < Math.min(shuffledUncoveredResidents.length, availableUncoveredSpots.length); i++) {
-      const resident = shuffledUncoveredResidents[i];
-      const spot = availableUncoveredSpots[i];
-      
-      // Se for uma entrada de vaga dupla, mostrar como tal
-      const displayName = resident.id.includes('_double') 
-        ? `${resident.name} (2ª vaga)`
-        : resident.name;
-      
-      newResults.push({
-        residentName: displayName,
-        apartment: resident.apartment,
-        spotNumber: spot.number,
-        spotType: 'uncovered'
-      });
-    }
-    
-    setLotteryResults(newResults);
-    setShowResults(true);
-    
-    toast.success("Sorteio realizado com sucesso!", {
-      description: `${newResults.length} vagas foram sorteadas.`
+      if (apartamentosElegiveis.length > 0) {
+        // Sortear um apartamento aleatório entre os elegíveis
+        const apartamentoSorteado = apartamentosElegiveis[
+          Math.floor(Math.random() * apartamentosElegiveis.length)
+        ];
+        
+        results.push({
+          number: vaga.number,
+          location: vaga.location,
+          type: vaga.type,
+          assignedApartment: apartamentoSorteado,
+          observations: "Apto elegível sorteado"
+        });
+      }
     });
+    
+    // Adicionar vagas pré-selecionadas e com regra oculta nos resultados
+    parkingSpots.forEach(vaga => {
+      if (vaga.isPreSelected || vaga.hasHiddenRule) {
+        results.push({
+          number: vaga.number,
+          location: vaga.location,
+          type: vaga.type,
+          assignedApartment: vaga.isPreSelected ? 
+            (vaga.eligibleApartments[0] || "") : "",
+          observations: vaga.isPreSelected ? 
+            "Pré-selecionada - não sorteada" : "Não sorteia"
+        });
+      }
+    });
+    
+    // Ordenar resultados por número da vaga
+    results.sort((a, b) => {
+      const numA = parseInt(a.number) || 0;
+      const numB = parseInt(b.number) || 0;
+      return numA - numB;
+    });
+    
+    setLotteryResults([{
+      id: `lottery-${Date.now()}`,
+      date: new Date(),
+      results
+    }]);
+    setShowResults(true);
+    toast.success(`Sorteio realizado! ${results.filter(r => r.assignedApartment).length} vagas atribuídas.`);
   };
 
   return (
@@ -143,13 +110,13 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="admin" className="mt-0">
-          <AdminPanel 
-            residents={residents}
-            parkingSpots={parkingSpots}
-            onResidentsAdded={handleResidentsAdded}
-            onSpotsConfigured={handleSpotsConfigured}
-            onPerformLottery={performLottery}
-          />
+            <AdminPanel
+              residents={residents}
+              parkingSpots={parkingSpots}
+              onResidentsAdded={handleResidentsAdded}
+              onVagasConfigured={handleVagasConfigured}
+              onPerformLottery={performLottery}
+            />
         </TabsContent>
       </Tabs>
     </div>
