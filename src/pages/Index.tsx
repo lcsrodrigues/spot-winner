@@ -29,12 +29,35 @@ const Index = () => {
     
     const results: LotteryResult['results'] = [];
     
+    // Identificar apartamentos "reservados" (com elegibilidade específica)
+    const apartamentosReservados = new Set<string>();
+    parkingSpots.forEach(vaga => {
+      if (vaga.eligibleApartments.length > 0) {
+        vaga.eligibleApartments.forEach(apt => apartamentosReservados.add(apt));
+      }
+    });
+    
+    // Criar pool de apartamentos para sorteio geral (todos os moradores menos os reservados)
+    const apartamentosGerais = residents
+      .map(resident => resident.apartment)
+      .filter(apt => !apartamentosReservados.has(apt));
+    
     // Processar cada vaga disponível
     vagasDisponiveis.forEach(vaga => {
-      // Encontrar apartamentos elegíveis que ainda têm moradores cadastrados
-      const apartamentosElegiveis = vaga.eligibleApartments.filter(apt =>
-        residents.some(resident => resident.apartment === apt)
-      );
+      let apartamentosElegiveis: string[] = [];
+      let tipoSorteio = "";
+      
+      if (vaga.eligibleApartments.length > 0) {
+        // Vaga com apartamentos específicos
+        apartamentosElegiveis = vaga.eligibleApartments.filter(apt =>
+          residents.some(resident => resident.apartment === apt)
+        );
+        tipoSorteio = "Apto elegível específico";
+      } else {
+        // Vaga sem apartamentos específicos - usar pool geral
+        apartamentosElegiveis = apartamentosGerais;
+        tipoSorteio = "Sorteio geral";
+      }
       
       if (apartamentosElegiveis.length > 0) {
         // Sortear um apartamento aleatório entre os elegíveis
@@ -47,7 +70,7 @@ const Index = () => {
           location: vaga.location,
           type: vaga.type,
           assignedApartment: apartamentoSorteado,
-          observations: "Apto elegível sorteado"
+          observations: tipoSorteio
         });
       }
     });
